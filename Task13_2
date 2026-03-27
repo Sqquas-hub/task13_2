@@ -1,1 +1,49 @@
+https://colab.research.google.com/drive/1ooGrxoh0ozG91i3o6nGXQy8s9fDWXjsa#scrollTo=KMXBIHSlILmF&line=33&uniqifier=1
+import pandas as pd
+from keybert import KeyBERT  # или yake
 
+def find_keywords(file_path):
+    # 1. Загружаем данные
+    df = pd.read_csv(file_path)
+
+    # 2. Инициализируем модель
+    kw_model = KeyBERT()  # или kw_extractor = yake.KeywordExtractor()
+
+    # 3. Создаем пустой список для результатов
+    keywords_list = []
+
+    # 4. Для каждого отзыва извлекаем ключевые слова
+    for text in df['normalized_text']:
+        if pd.notna(text) and text.strip():
+            keywords = kw_model.extract_keywords(
+                text,
+                keyphrase_ngram_range=(1, 2),  # можно искать фразы из 1-2 слов
+                stop_words='russian',           # удаляем стоп-слова
+                top_n=5                         # берем топ-5 ключевых слов
+            )
+        else:
+            keywords = []
+        keywords_list.append(keywords)
+
+    # 5. Добавляем новый столбец
+    df['key_words'] = keywords_list
+
+    # 6. Возвращаем обновленный DataFrame
+    return df
+
+result = find_keywords('cafe_reviews.csv')
+print(result[['normalized_text', 'key_words']].head())
+
+ Loading weights: 100% 103/103 [00:00<00:00, 433.44it/s, Materializing param=pooler.dense.weight]BertModel LOAD REPORT from: sentence-transformers/all-MiniLM-L6-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+                                     normalized_text key_words
+0  самый любимая кафешка район вкусный кофе выпеч...        []
+1  добираться сказать качество блюдо домашний кух...        []
+2  шикарный место вкусно готовить приятный атмосф...        []
+3  отмечать день рождение роща столик заранее зак...        []
+4  отличный база отдых часто семья отдыхать добро...        []
